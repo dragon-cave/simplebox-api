@@ -9,6 +9,7 @@ from user.serializers import (
     CustomRegisterSerializer
 )
 
+from dj_rest_auth.views import PasswordChangeView, PasswordResetView
 from dj_rest_auth.registration.views import LoginView, RegisterView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -56,3 +57,28 @@ class CustomLoginView(LoginView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }, status=status.HTTP_200_OK)
+
+class CustomPasswordChangeView(PasswordChangeView):
+    def post(self, request, *args, **kwargs):
+        old_password = request.data.get('old_password', None)
+
+        # Verificar se a senha antiga está presente na requisição
+        if old_password is None:
+            return Response({'detail': 'A senha antiga não foi fornecida.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Adicione lógica para validar a senha antiga
+        if not request.user.check_password(old_password):
+            return Response({'detail': 'Senha antiga incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return super().post(request, *args, **kwargs)
+    
+class CustomPasswordResetView(PasswordResetView):
+    def post(self, request, *args, **kwargs):
+        # Check if the provided email exists in the User model
+        email = request.data.get('email')
+        if User.objects.filter(email=email).exists():
+            # If the email exists, proceed with the default behavior
+            return super().post(request, *args, **kwargs)
+        else:
+            # If the email doesn't exist, return a Response with an error message
+            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
