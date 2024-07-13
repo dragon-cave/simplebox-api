@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: 3.12.4
 
+      - name: Set environment variable
+        run: echo "TEST_ENV=true" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
