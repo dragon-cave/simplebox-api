@@ -29,6 +29,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run makemigrations
+        run: python manage.py makemigrations s3django user
+
       - name: Run migrations
         run: python manage.py migrate
 
