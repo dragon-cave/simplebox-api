@@ -34,7 +34,6 @@ class CustomRegisterView(RegisterView):
     serializer_class = CustomRegisterSerializer
     permission_classes = [permissions.AllowAny]
 
-    # the response when the user is created is a 201 status code telling the user was created, with no content
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -62,23 +61,18 @@ class CustomPasswordChangeView(PasswordChangeView):
     def post(self, request, *args, **kwargs):
         old_password = request.data.get('old_password', None)
 
-        # Verificar se a senha antiga está presente na requisição
         if old_password is None:
-            return Response({'detail': 'A senha antiga não foi fornecida.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'old_password': ['A senha antiga não foi fornecida.']}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Adicione lógica para validar a senha antiga
         if not request.user.check_password(old_password):
-            return Response({'detail': 'Senha antiga incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'old_password': ['Senha antiga incorreta.']}, status=status.HTTP_400_BAD_REQUEST)
 
         return super().post(request, *args, **kwargs)
     
 class CustomPasswordResetView(PasswordResetView):
     def post(self, request, *args, **kwargs):
-        # Check if the provided email exists in the User model
         email = request.data.get('email')
         if User.objects.filter(email=email).exists():
-            # If the email exists, proceed with the default behavior
             return super().post(request, *args, **kwargs)
         else:
-            # If the email doesn't exist, return a Response with an error message
-            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'email': ['Este endereço de email não está cadastrado.']}, status=status.HTTP_400_BAD_REQUEST)
