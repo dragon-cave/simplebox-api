@@ -3,4 +3,4 @@
 
 cd /home/ubuntu/simplebox/simplebox-api
 source venv/bin/activate
-python3 manage.py runserver 0.0.0.0:8001
+gunicorn -b 0.0.0.0:8001 s3django.wsgi
