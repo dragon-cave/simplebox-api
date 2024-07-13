@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-qchati+5w3$c6v03br316qp3whezdz+6hk+l@s3y1(slmo+zvx'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,17 +56,9 @@ INSTALLED_APPS = [
 ]
 
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:5173',
-    'http://localhost',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1',
 ]
 
 MIDDLEWARE = [
@@ -107,9 +99,14 @@ WSGI_APPLICATION = 's3django.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
+        'PORT': os.getenv("DB_PORT"),
     }
+
 }
 
 
@@ -175,10 +172,10 @@ AUTHENTICATION_BACKENDS = [
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = 587
+EMAIL_PORT = os.getenv('EMAIL_PORT')
 
 REST_AUTH = {
     'SESSION_LOGIN': True,
