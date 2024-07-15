@@ -35,6 +35,11 @@ class CustomRegisterView(RegisterView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
+        try:
+            User.objects.get(email=request.data['email'])
+            return Response({'email': ['Este endereço de email já está cadastrado.']}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            pass
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
