@@ -20,7 +20,7 @@ from user.views import UserView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("api/user/profile_picture/", ProfilePictureView.as_view(), name="profile_picture"),
     path("api/user/", UserView.as_view(), name="user"),
     path('api/auth/', include('user.urls')),
 
