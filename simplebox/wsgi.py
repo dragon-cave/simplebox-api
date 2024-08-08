@@ -1,5 +1,5 @@
 """
-WSGI config for s3django project.
+WSGI config for simplebox project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 's3django.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'simplebox.settings')
 
 application = get_wsgi_application()

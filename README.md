@@ -12,7 +12,7 @@ Essas instruções são para executar o projeto localmente, caso queira executar
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python manage.py makemigrations user s3django
+python manage.py makemigrations user simplebox
 python manage.py migrate
 python manage.py runserver
 ```

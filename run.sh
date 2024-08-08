@@ -3,4 +3,4 @@
 
 cd /home/ubuntu/simplebox/simplebox-api
 source venv/bin/activate
-gunicorn -b 0.0.0.0:8001 s3django.wsgi
+gunicorn -b 0.0.0.0:8001 simplebox.wsgi
