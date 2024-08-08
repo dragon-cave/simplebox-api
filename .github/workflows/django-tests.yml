@@ -29,7 +29,9 @@ jobs:
           python-version: 3.12.4
 
       - name: Set environment variable
-        run: echo "TEST_ENV=true" >> $GITHUB_ENV && echo ${{ secrets.AWS_ACCOUNT_ID }} >> $GITHUB_ENV
+        run: |
+          echo "TEST_ENV=true" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
