@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run makemigrations
-        run: python manage.py makemigrations s3django user
+        run: python manage.py makemigrations simplebox user
 
       - name: Run migrations
         run: python manage.py migrate
