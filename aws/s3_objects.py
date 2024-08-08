@@ -1,4 +1,3 @@
-import os
 from .s3 import bucket_name, client
 
 def list_files(prefix=''):
