@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from user.models import User
-from user.validators import validate_image_base64
+from user.validators import validate_image
 
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
@@ -39,4 +39,4 @@ class CustomLoginSerializer(LoginSerializer):
         return data_dict
 
 class ProfilePictureSerializer(serializers.Serializer):
-    picture = serializers.CharField(validators=[validate_image_base64])
+    picture = serializers.CharField(validators=[validate_image])
