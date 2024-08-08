@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from aws.s3 import bucket_name
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -98,6 +99,7 @@ if len(str(os.getenv("TEST_ENV"))) > 0:
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+    bucket_name = 'test'
 
 AUTH_PASSWORD_VALIDATORS = [
     # {
