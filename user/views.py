@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from user.models import User
+from user.validators import validate_image
+from aws.s3_user import get_user_profile_picture_url, set_user_profile_picture
+from aws.s3_exceptions import UserProfilePictureNotFound
 from user.serializers import (
     UserSerializer,
     CustomLoginSerializer,
@@ -29,7 +32,31 @@ class UserView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+class ProfilePictureView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            url = get_user_profile_picture_url(request.user.user_id)
+            return Response({'url': url})
+        except UserProfilePictureNotFound:
+            return Response({'error': 'Imagem de perfil não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request):
+        picture = request.FILES['picture']
+        picture.name = 'profile_picture' + picture.name[picture.name.rfind('.'):]
+        try:
+            validate_image(picture.read())
+            picture.seek(0)
+
+            set_user_profile_picture(request.user.user_id, picture)
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class CustomRegisterView(RegisterView):
     serializer_class = CustomRegisterSerializer
     permission_classes = [permissions.AllowAny]

@@ -1,0 +1,2 @@
+class UserProfilePictureNotFound(Exception):
+    pass

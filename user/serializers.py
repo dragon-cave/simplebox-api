@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from user.models import User
+from user.validators import validate_image
 
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
@@ -36,3 +37,6 @@ class CustomLoginSerializer(LoginSerializer):
         data_dict['user_id'] = user.user_id if hasattr(user, 'user_id') else user.id
 
         return data_dict
+
+class ProfilePictureSerializer(serializers.Serializer):
+    picture = serializers.CharField(validators=[validate_image])
