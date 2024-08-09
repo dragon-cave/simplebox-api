@@ -16,4 +16,4 @@ def set_user_profile_picture(user_id, file):
         delete_file(files[0]['Key'])
 
     file_name = file_path + file.name
-    upload_file(file, file_name)
+    upload_file(file.read(), file_name)

@@ -52,7 +52,7 @@ class ProfilePictureView(APIView):
             set_user_profile_picture(request.user.user_id, picture)
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'File is not an image'}, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomRegisterView(RegisterView):
     serializer_class = CustomRegisterSerializer
