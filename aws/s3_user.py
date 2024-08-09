@@ -8,12 +8,12 @@ def get_user_profile_picture_url(user_id):
         raise UserProfilePictureNotFound
     return generate_presigned_url(files[0]['Key'])
 
-def set_user_profile_picture(user_id, file_content, file_name):
+def set_user_profile_picture(user_id, file):
     file_path = f'users/{user_id}/profile_picture/'
     files = list_files(file_path)
     
     if files:
         delete_file(files[0]['Key'])
 
-    file_name = file_path + file_name
-    upload_file(file_content, file_name)
+    file_name = file_path + file.name
+    upload_file(file, file_name)

@@ -48,9 +48,11 @@ class ProfilePictureView(APIView):
         picture = request.FILES['picture']
         picture.name = 'profile_picture' + picture.name[picture.name.rfind('.'):]
         try:
-            picture_content = picture.read()
-            validate_image(picture_content)
-            set_user_profile_picture(request.user.user_id, picture_content, picture.name)
+            validate_image(picture.read())
+            picture.seek(0)
+
+            set_user_profile_picture(request.user.user_id, picture)
+            
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
