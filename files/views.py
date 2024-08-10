@@ -71,12 +71,17 @@ class WebhookView(APIView):
 class FileUploadView(APIView):
     def post(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
+
         if not uploaded_file:
             return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if '/' in uploaded_file.name:
+            return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_name = uploaded_file.name
+        file_name = f'/users/{request.user.id}/files/{uploaded_file.name}'
         file_size = uploaded_file.size
-        file_url = upload_file(uploaded_file, file_name)
+        
+        upload_file(uploaded_file, file_name)
 
         file_instance = GenericFile.objects.create(
             name=file_name,
@@ -87,4 +92,4 @@ class FileUploadView(APIView):
 
         serializer = GenericFileSerializer(file_instance)
 
-        return Response({"file_url": file_url, "file": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
