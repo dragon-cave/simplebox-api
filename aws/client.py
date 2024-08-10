@@ -1,6 +1,7 @@
 import boto3
 import os
 from datetime import datetime, timedelta
+import pytz
 
 class AWSClientManager:
     def __init__(self, s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name, region_name):
@@ -64,10 +65,12 @@ class AWSClientManager:
             raise
 
     def is_s3_credentials_expired(self):
-        return datetime.now() + timedelta(minutes=5) >= self.s3_expiration
+        now = datetime.now(pytz.utc)
+        return now + timedelta(minutes=5) >= self.s3_expiration
 
     def is_sqs_credentials_expired(self):
-        return datetime.now() + timedelta(minutes=5) >= self.sqs_expiration
+        now = datetime.now(pytz.utc)
+        return now + timedelta(minutes=5) >= self.sqs_expiration
 
     def get_s3_client(self):
         if self.is_s3_credentials_expired():
@@ -92,6 +95,7 @@ class AWSClientManager:
             print(f"Failed to send SQS message: {str(e)}")
             raise
 
+# Load environment variables
 account_id = os.getenv('AWS_ACCOUNT_ID')
 region_name = os.getenv('AWS_REGION')
 s3_role_arn = f'arn:aws:iam::{account_id}:role/S3AccessRole'
@@ -101,4 +105,5 @@ sqs_session_name = 'SQSBackendSession'
 bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
 queue_url = os.getenv('AWS_SQS_QUEUE_URL')
 
+# Initialize AWSClientManager
 aws_manager = AWSClientManager(s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name, region_name)
