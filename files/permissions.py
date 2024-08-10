@@ -3,11 +3,11 @@ from ipaddress import ip_address, ip_network
 
 class IsPrivateSubnet(BasePermission):
     """
-    Custom permission to only allow access from IPs within a private subnet.
+    Custom permission to only allow access from IPs within specified subnets.
     """
     
-    def __init__(self, subnet):
-        self.subnet = ip_network(subnet, strict=False)
+    def __init__(self, subnets):
+        self.subnets = [ip_network(subnet, strict=False) for subnet in subnets]
     
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
