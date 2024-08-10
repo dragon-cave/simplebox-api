@@ -69,18 +69,18 @@ class WebhookView(APIView):
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 
 class FileUploadView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
     def post(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
         if not uploaded_file:
             return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         file_name = uploaded_file.name
+        file_size = uploaded_file.size
         file_url = upload_file(uploaded_file, file_name)
 
         file_instance = GenericFile.objects.create(
             name=file_name,
+            size=file_size,
             owner=request.user,
             processed=False
         )

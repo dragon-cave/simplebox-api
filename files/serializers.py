@@ -11,6 +11,7 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ['id', 'name', 'size', 'upload_date', 'mime_type', 'description', 'tags']
+        read_only_fields = ['size']
 
 class GenericFileSerializer(BaseMediaFileSerializer):
     class Meta(BaseMediaFileSerializer.Meta):
