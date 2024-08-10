@@ -4,9 +4,10 @@ from rest_framework import viewsets, filters, status, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import BaseMediaFile, ImageFile, VideoFile, AudioFile
+from .models import BaseMediaFile, GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
     BaseMediaFileSerializer,
+    GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,
     AudioFileSerializer
@@ -29,7 +30,7 @@ class FileViewSet(viewsets.ReadOnlyModelViewSet):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
 
-        queryset = ImageFile.objects.none()
+        queryset = GenericFile.objects.all()
 
         if 'image' in types:
             queryset |= ImageFile.objects.all()
@@ -39,7 +40,7 @@ class FileViewSet(viewsets.ReadOnlyModelViewSet):
             queryset |= AudioFile.objects.all()
         
         if not types:
-            queryset = ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
+            queryset = GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
         
         if search:
             queryset = queryset.filter(
@@ -58,7 +59,7 @@ class FileViewSet(viewsets.ReadOnlyModelViewSet):
             return VideoFileSerializer
         elif 'audio' in types:
             return AudioFileSerializer
-        return ImageFileSerializer
+        return GenericFileSerializer
 
 class WebhookView(APIView):
     permission_classes = [IsPrivateSubnet]
@@ -78,12 +79,12 @@ class FileUploadView(APIView):
         file_name = uploaded_file.name
         file_url = upload_file(uploaded_file, file_name)
 
-        file_instance = BaseMediaFile.objects.create(
+        file_instance = GenericFile.objects.create(
             name=file_name,
             user=request.user,
             processed=False
         )
 
-        serializer = BaseMediaFileSerializer(file_instance)
+        serializer = GenericFileSerializer(file_instance)
 
         return Response({"file_url": file_url, "file": serializer.data}, status=status.HTTP_201_CREATED)

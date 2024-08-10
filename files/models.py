@@ -17,13 +17,16 @@ class BaseMediaFile(models.Model):
     def __str__(self):
         return self.name
     
+class GenericFile(BaseMediaFile):
+    def __str__(self):
+        return self.name
+    
 class ImageFile(BaseMediaFile):
     width = models.PositiveIntegerField()
     height = models.PositiveIntegerField()
     color_depth = models.PositiveIntegerField()
     resolution = models.CharField(max_length=50)
     exif_data = models.JSONField(null=True, blank=True)
-    thumbnail_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return self.name

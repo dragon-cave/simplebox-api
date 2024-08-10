@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ImageFile, VideoFile, AudioFile, Tag
+from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,6 +11,11 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ['id', 'name', 'size', 'upload_date', 'mime_type', 'description', 'tags']
+
+class GenericFileSerializer(BaseMediaFileSerializer):
+    class Meta(BaseMediaFileSerializer.Meta):
+        model = GenericFile
+        fields = BaseMediaFileSerializer.Meta.fields
 
 class ImageFileSerializer(BaseMediaFileSerializer):
     width = serializers.IntegerField()
