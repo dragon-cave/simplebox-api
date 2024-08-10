@@ -4,9 +4,8 @@ from rest_framework import viewsets, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import BaseMediaFile, GenericFile, ImageFile, VideoFile, AudioFile
+from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
-    BaseMediaFileSerializer,
     GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,

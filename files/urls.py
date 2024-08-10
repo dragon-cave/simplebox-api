@@ -7,5 +7,5 @@ router.register(r'', FileViewSet, basename='file')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('webhook/', WebhookView.as_view(), name='webhook'),
+    # path('webhook/', WebhookView.as_view(), name='webhook'),
 ]
