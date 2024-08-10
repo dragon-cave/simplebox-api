@@ -4,7 +4,7 @@ from rest_framework import viewsets, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import File, ImageFile, VideoFile, AudioFile
+from .models import BaseMediaFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
     BaseMediaFileSerializer,
     ImageFileSerializer,
@@ -76,7 +76,7 @@ class FileUploadView(APIView):
         file_name = uploaded_file.name
         file_url = upload_file(uploaded_file, file_name)
         
-        file_instance = File.objects.create(
+        file_instance = BaseMediaFile.objects.create(
             name=file_name,
             user=request.user,
             processed=False
