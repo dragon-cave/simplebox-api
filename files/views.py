@@ -19,11 +19,11 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class FileViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.CreateModelMixin):
+class FileViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     pagination_class = StandardResultsSetPagination
     ordering_fields = '__all__'
-
+    
     def get_queryset(self):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
