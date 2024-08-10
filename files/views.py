@@ -81,7 +81,7 @@ class FileUploadView(APIView):
 
         file_instance = GenericFile.objects.create(
             name=file_name,
-            user=request.user,
+            owner=request.user,
             processed=False
         )
 

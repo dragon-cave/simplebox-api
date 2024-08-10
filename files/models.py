@@ -13,6 +13,8 @@ class BaseMediaFile(models.Model):
     mime_type = models.CharField(max_length=50)
     description = models.TextField(null=True, blank=True)
     tags = models.ManyToManyField('Tag', related_name='%(class)s_media_files')
+    owner = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    processed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
