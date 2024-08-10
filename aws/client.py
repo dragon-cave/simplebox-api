@@ -3,11 +3,12 @@ import os
 from datetime import datetime, timedelta
 
 class AWSClientManager:
-    def __init__(self, s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name):
+    def __init__(self, s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name, region_name):
         self.s3_role_arn = s3_role_arn
         self.s3_session_name = s3_session_name
         self.sqs_role_arn = sqs_role_arn
         self.sqs_session_name = sqs_session_name
+        self.region_name = region_name
         self.s3_credentials = None
         self.s3_expiration = None
         self.sqs_credentials = None
@@ -16,7 +17,7 @@ class AWSClientManager:
         self.sqs_client = None
 
         # Initialize STS client
-        self.sts_client = boto3.client('sts')
+        self.sts_client = boto3.client('sts', region_name=self.region_name)
 
         # Initial credential refresh
         self.refresh_s3_credentials()
@@ -35,7 +36,8 @@ class AWSClientManager:
                 's3',
                 aws_access_key_id=self.s3_credentials['AccessKeyId'],
                 aws_secret_access_key=self.s3_credentials['SecretAccessKey'],
-                aws_session_token=self.s3_credentials['SessionToken']
+                aws_session_token=self.s3_credentials['SessionToken'],
+                region_name=self.region_name
             )
         except Exception as e:
             print(f"Failed to refresh S3 credentials: {str(e)}")
@@ -54,7 +56,8 @@ class AWSClientManager:
                 'sqs',
                 aws_access_key_id=self.sqs_credentials['AccessKeyId'],
                 aws_secret_access_key=self.sqs_credentials['SecretAccessKey'],
-                aws_session_token=self.sqs_credentials['SessionToken']
+                aws_session_token=self.sqs_credentials['SessionToken'],
+                region_name=self.region_name
             )
         except Exception as e:
             print(f"Failed to refresh SQS credentials: {str(e)}")
@@ -89,8 +92,8 @@ class AWSClientManager:
             print(f"Failed to send SQS message: {str(e)}")
             raise
 
-# Load environment variables
 account_id = os.getenv('AWS_ACCOUNT_ID')
+region_name = os.getenv('AWS_REGION')
 s3_role_arn = f'arn:aws:iam::{account_id}:role/S3AccessRole'
 s3_session_name = 'S3BackendSession'
 sqs_role_arn = f'arn:aws:iam::{account_id}:role/SQSAccessRole'
@@ -98,5 +101,4 @@ sqs_session_name = 'SQSBackendSession'
 bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
 queue_url = os.getenv('AWS_SQS_QUEUE_URL')
 
-# Initialize AWSClientManager
-aws_manager = AWSClientManager(s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name)
+aws_manager = AWSClientManager(s3_role_arn, s3_session_name, sqs_role_arn, sqs_session_name, region_name)
