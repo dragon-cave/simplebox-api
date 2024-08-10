@@ -1,7 +1,5 @@
 from django.db import models
 
-from django.db import models
-
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -14,7 +12,7 @@ class BaseMediaFile(models.Model):
     upload_date = models.DateTimeField(auto_now_add=True)
     mime_type = models.CharField(max_length=50)
     description = models.TextField(null=True, blank=True)
-    tags = models.ManyToManyField('Tag', related_name='media_files')
+    tags = models.ManyToManyField('Tag', related_name='%(class)s_media_files')
 
     class Meta:
         abstract = True
@@ -40,9 +38,7 @@ class VideoFile(BaseMediaFile):
     video_codec = models.CharField(max_length=50)
     audio_codec = models.CharField(max_length=50)
     bit_rate = models.PositiveIntegerField()
-    genre = models.CharField(null=True, blank=True)
-    # thumbnail_url = models.URLField(null=True, blank=True) 
-    # quality_versions = models.JSONField(null=True, blank=True)
+    genre = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -52,7 +48,7 @@ class AudioFile(BaseMediaFile):
     bit_rate = models.PositiveIntegerField()
     sample_rate = models.PositiveIntegerField()
     channels = models.PositiveIntegerField()
-    genre = models.CharField(null=True, blank=True)
+    genre = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return self.name
