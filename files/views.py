@@ -61,7 +61,7 @@ class FileViewSet(viewsets.ReadOnlyModelViewSet):
         return ImageFileSerializer
 
 class WebhookView(APIView):
-    permission_classes = [IsPrivateSubnet([ '10.0.128.0/20', '10.0.144.0/20' ])]
+    permission_classes = [IsPrivateSubnet]
     
     def post(self, request, *args, **kwargs):
         # Process the webhook data here
@@ -72,10 +72,10 @@ class FileUploadView(APIView):
         uploaded_file = request.FILES.get('file')
         if not uploaded_file:
             return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         file_name = uploaded_file.name
         file_url = upload_file(uploaded_file, file_name)
-        
+
         file_instance = BaseMediaFile.objects.create(
             name=file_name,
             user=request.user,

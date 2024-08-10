@@ -5,9 +5,10 @@ class IsPrivateSubnet(BasePermission):
     """
     Custom permission to only allow access from IPs within specified subnets.
     """
+    subnet_cidrs = [ '10.0.128.0/20', '10.0.144.0/20' ]
     
-    def __init__(self, subnets):
-        self.subnets = [ip_network(subnet, strict=False) for subnet in subnets]
+    def __init__(self):
+        self.subnets = [ip_network(subnet, strict=False) for subnet in self.subnet_cidrs]
     
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
