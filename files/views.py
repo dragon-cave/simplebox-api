@@ -1,9 +1,11 @@
+from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import MethodNotAllowed
 from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
     GenericFileSerializer,
@@ -12,7 +14,7 @@ from .serializers import (
     AudioFileSerializer
 )
 from .permissions import IsPrivateSubnet
-from aws.s3_objects import upload_file
+from aws.s3_objects import upload_file, delete_file
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -63,7 +65,7 @@ class FileViewSet(viewsets.ModelViewSet):
         uploaded_file = request.FILES.get('file')
 
         if not uploaded_file:
-            return Response({"error": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Nenhum arquivo enviado."}, status=status.HTTP_400_BAD_REQUEST)
         
         if '/' in uploaded_file.name:
             return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
@@ -82,7 +84,27 @@ class FileViewSet(viewsets.ModelViewSet):
 
         serializer = GenericFileSerializer(file_instance)
 
-        return Response({"file_url": file_url, "file": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PUT method is not allowed.")
+
+    def partial_update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PATCH method is not allowed.")
+
+    def destroy(self, request, *args, **kwargs):
+        file_id = kwargs.get('pk')
+        file_instance = get_object_or_404(GenericFile, id=file_id)
+
+        if not file_instance.processed:
+            return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
+        file_instance.delete()
+
+        delete_file(file_path)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class WebhookView(APIView):
     permission_classes = [IsPrivateSubnet]
