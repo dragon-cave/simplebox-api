@@ -14,9 +14,6 @@ class BaseMediaFile(models.Model):
     description = models.TextField(null=True, blank=True)
     tags = models.ManyToManyField('Tag', related_name='%(class)s_media_files')
 
-    class Meta:
-        abstract = True
-
     def __str__(self):
         return self.name
     
