@@ -108,7 +108,7 @@ class FileViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class WebhookView(APIView):
-    permission_classes = [AllowAny, IsPrivateSubnet]
+    permission_classes = [IsPrivateSubnet]
     
     def post(self, request, *args, **kwargs):
         # Process the webhook data here
