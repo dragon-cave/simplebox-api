@@ -14,8 +14,9 @@ from .serializers import (
     AudioFileSerializer
 )
 from .permissions import IsPrivateSubnet
-from rest_framework.permissions import AllowAny
+from aws.client import aws_manager
 from aws.s3_objects import upload_file, delete_file
+from aws.sqs import enqueue_json_object
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -82,6 +83,12 @@ class FileViewSet(viewsets.ModelViewSet):
             owner=request.user,
             processed=False
         )
+
+        enqueue_json_object({
+            'user_id': request.user.user_id,
+            'file_name': file_name,
+            'file_id': file_instance.id
+        })
 
         serializer = GenericFileSerializer(file_instance)
 
