@@ -44,7 +44,7 @@ class ProfilePictureView(APIView):
         except UserProfilePictureNotFound:
             return Response({'error': 'Imagem de perfil não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-    def put(self, request):
+    def post(self, request):
         picture = request.FILES['picture']
         picture.name = 'profile_picture' + picture.name[picture.name.rfind('.'):]
         try:
