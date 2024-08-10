@@ -1,6 +1,7 @@
-from pathlib import Path
 import os
-from aws.s3 import bucket_name
+from pathlib import Path
+from aws.client import bucket_name
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -158,6 +159,8 @@ REST_AUTH = {
 
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 REST_AUTH_SERIALIZERS = {
