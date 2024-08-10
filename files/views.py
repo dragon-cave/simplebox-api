@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, filters, status, permissions
+from rest_framework import viewsets, filters, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,13 +15,12 @@ from .serializers import (
 from .permissions import IsPrivateSubnet
 from aws.s3_objects import upload_file
 
-
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class FileViewSet(viewsets.ReadOnlyModelViewSet):
+class FileViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.CreateModelMixin):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     pagination_class = StandardResultsSetPagination
     ordering_fields = '__all__'
@@ -61,15 +60,7 @@ class FileViewSet(viewsets.ReadOnlyModelViewSet):
             return AudioFileSerializer
         return GenericFileSerializer
 
-class WebhookView(APIView):
-    permission_classes = [IsPrivateSubnet]
-    
-    def post(self, request, *args, **kwargs):
-        # Process the webhook data here
-        return Response({'status': 'success'}, status=status.HTTP_200_OK)
-
-class FileUploadView(APIView):
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
 
         if not uploaded_file:
@@ -78,10 +69,10 @@ class FileUploadView(APIView):
         if '/' in uploaded_file.name:
             return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_name = upload_file.name
+        file_name = uploaded_file.name
         file_size = uploaded_file.size
         
-        upload_file(uploaded_file, f'users/{request.user.user_id}/files/{file_name}')
+        file_url = upload_file(uploaded_file, f'users/{request.user.user_id}/files/{file_name}')
 
         file_instance = GenericFile.objects.create(
             name=file_name,
@@ -92,4 +83,11 @@ class FileUploadView(APIView):
 
         serializer = GenericFileSerializer(file_instance)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"file_url": file_url, "file": serializer.data}, status=status.HTTP_201_CREATED)
+
+class WebhookView(APIView):
+    permission_classes = [IsPrivateSubnet]
+    
+    def post(self, request, *args, **kwargs):
+        # Process the webhook data here
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)

@@ -3,10 +3,9 @@ from rest_framework.routers import DefaultRouter
 from .views import FileUploadView, FileViewSet, WebhookView
 
 router = DefaultRouter()
-router.register(r'files', FileViewSet, basename='file')
+router.register(r'', FileViewSet, basename='file')
 
 urlpatterns = [
+    path('webhook/', WebhookView.as_view(), name='webhook'),
     path('', include(router.urls)),
-    path('files/', FileUploadView.as_view(), name='file-upload'),
-    path('files/webhook/', WebhookView.as_view(), name='webhook'),
 ]
