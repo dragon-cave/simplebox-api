@@ -14,6 +14,7 @@ from .serializers import (
     AudioFileSerializer
 )
 from .permissions import IsPrivateSubnet
+from rest_framework.permissions import AllowAny
 from aws.s3_objects import upload_file, delete_file
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -73,7 +74,7 @@ class FileViewSet(viewsets.ModelViewSet):
         file_name = uploaded_file.name
         file_size = uploaded_file.size
         
-        file_url = upload_file(uploaded_file, f'users/{request.user.user_id}/files/{file_name}')
+        upload_file(uploaded_file, f'users/{request.user.user_id}/files/{file_name}')
 
         file_instance = GenericFile.objects.create(
             name=file_name,
@@ -107,7 +108,7 @@ class FileViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class WebhookView(APIView):
-    permission_classes = [IsPrivateSubnet]
+    permission_classes = [IsPrivateSubnet, AllowAny]
     
     def post(self, request, *args, **kwargs):
         # Process the webhook data here
