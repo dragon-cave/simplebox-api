@@ -78,10 +78,10 @@ class FileUploadView(APIView):
         if '/' in uploaded_file.name:
             return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_name = f'users/{request.user.user_id}/files/{uploaded_file.name}'
+        file_name = upload_file.name
         file_size = uploaded_file.size
         
-        upload_file(uploaded_file, file_name)
+        upload_file(uploaded_file, f'users/{request.user.user_id}/files/{file_name}')
 
         file_instance = GenericFile.objects.create(
             name=file_name,
