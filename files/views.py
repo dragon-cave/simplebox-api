@@ -118,5 +118,81 @@ class WebhookView(APIView):
     permission_classes = [IsPrivateSubnet]
     
     def post(self, request, *args, **kwargs):
-        # Process the webhook data here
-        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        data = request.data
+        
+        file_id = data.get('file_id')
+        mime_type = data.get('mime_type')
+        file_data = data.get('data', {})
+        
+        # Retrieve the GenericFile instance and extract its data
+        generic_file_instance = get_object_or_404(GenericFile, id=file_id)
+        file_name = generic_file_instance.name
+        file_size = generic_file_instance.size
+        file_owner = generic_file_instance.owner
+        
+        # Check if the GenericFile has already been processed
+        if generic_file_instance.processed:
+            return Response({"error": "File has already been processed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Delete the GenericFile instance
+        generic_file_instance.delete()
+        
+        # Create and save media-specific instances
+        if mime_type.startswith('image/'):
+            # Create and save ImageFile instance
+            image_file = ImageFile(
+                id=file_id,  # Retain the original ID
+                name=file_name,
+                size=file_size,
+                mime_type=mime_type,
+                owner=file_owner,
+                width=file_data.get('width'),
+                height=file_data.get('height'),
+                color_depth=file_data.get('color_depth'),
+                resolution=file_data.get('resolution'),
+                exif_data=file_data.get('exif_data'),
+                processed=True
+            )
+            image_file.save()
+            serializer = ImageFileSerializer(image_file)
+        
+        elif mime_type.startswith('video/'):
+            # Create and save VideoFile instance
+            video_file = VideoFile(
+                id=file_id,  # Retain the original ID
+                name=file_name,
+                size=file_size,
+                mime_type=mime_type,
+                owner=file_owner,
+                duration=file_data.get('duration'),
+                resolution=file_data.get('resolution'),
+                frame_rate=file_data.get('frame_rate'),
+                video_codec=file_data.get('video_codec'),
+                audio_codec=file_data.get('audio_codec'),
+                bit_rate=file_data.get('bit_rate'),
+                processed=True
+            )
+            video_file.save()
+            serializer = VideoFileSerializer(video_file)
+        
+        elif mime_type.startswith('audio/'):
+            # Create and save AudioFile instance
+            audio_file = AudioFile(
+                id=file_id,  # Retain the original ID
+                name=file_name,
+                size=file_size,
+                mime_type=mime_type,
+                owner=file_owner,
+                duration=file_data.get('duration'),
+                bit_rate=file_data.get('bit_rate'),
+                sample_rate=file_data.get('sample_rate'),
+                channels=file_data.get('channels'),
+                processed=True
+            )
+            audio_file.save()
+            serializer = AudioFileSerializer(audio_file)
+        
+        else:
+            return Response({"error": "Unsupported MIME type."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
