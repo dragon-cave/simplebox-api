@@ -229,6 +229,7 @@ class FileViewSet(viewsets.ModelViewSet):
                     Key=old_key
                 )
         
+            file_instance.name = data['name']
         file_instance.save()
 
         serializer = MixedFileSerializer(file_instance)
