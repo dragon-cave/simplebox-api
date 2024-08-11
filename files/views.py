@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
 from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
+    BaseMediaFileSerializer,
     GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,
@@ -52,7 +53,8 @@ class FileViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    # def get_serializer_class(self):
+    def get_serializer_class(self):
+        return BaseMediaFileSerializer
     #     obj = self.get_object()
     #     if isinstance(obj, ImageFile):
     #         return ImageFileSerializer
