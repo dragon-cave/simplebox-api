@@ -240,7 +240,7 @@ class FileViewSet(viewsets.ModelViewSet):
 
         if isinstance(file_instance, VideoFile):
             # Delete processed video files
-            extension = file_instance.mime_type.split('/')[1]
+            extension = file_instance.name.split('.')[-1]
             for resolution in ['480p', '720p', '1080p']:
                 processed_path = f'{base_file_path}/processed/{resolution}.{extension}'
                 delete_file(processed_path)
