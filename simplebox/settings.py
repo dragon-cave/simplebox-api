@@ -1,6 +1,7 @@
-from pathlib import Path
 import os
-from aws.s3 import bucket_name
+from pathlib import Path
+from aws.client import bucket_name
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'simplebox',
     'user',
+    'files',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -46,9 +48,11 @@ INSTALLED_APPS = [
 ]
 
 CORS_ORIGIN_WHITELIST = [
+    'http://localhost:5173',
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
 ]
 
 MIDDLEWARE = [
@@ -94,7 +98,7 @@ DATABASES = {
     }
 }
 
-if len(str(os.getenv("TEST_ENV"))) > 0:
+if os.getenv("TEST_ENV") != None:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -158,6 +162,8 @@ REST_AUTH = {
 
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 REST_AUTH_SERIALIZERS = {
@@ -186,3 +192,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# 10GB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10000000000
