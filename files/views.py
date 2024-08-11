@@ -26,13 +26,14 @@ class StandardResultsSetPagination(PageNumberPagination):
 class FileViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     pagination_class = StandardResultsSetPagination
+    lookup_field = 'id'
     ordering_fields = '__all__'
     
     def get_queryset(self):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
 
-        queryset = GenericFile.objects.all()
+        queryset = GenericFile.objects.none()
 
         if 'image' in types:
             queryset |= ImageFile.objects.all()
