@@ -207,12 +207,10 @@ class FileViewSet(viewsets.ModelViewSet):
 
             old_file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
             new_file_path = f'users/{request.user.user_id}/files/{data['name']}'
-            print(old_file_path, new_file_path)
             files = list_files(prefix=old_file_path)
             
             for file in files:
                 old_key = file['Key']
-                print(old_key)
                 # Replace the old file path prefix with the new file path prefix
                 new_key = old_key.replace(old_file_path, new_file_path, 1)
                 
