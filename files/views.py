@@ -26,39 +26,36 @@ class StandardResultsSetPagination(PageNumberPagination):
 class FileViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     pagination_class = StandardResultsSetPagination
-    lookup_field = 'id'
     ordering_fields = '__all__'
     
     def get_queryset(self):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
 
-        queryset = []
+        queryset = GenericFile.objects.all()
 
         if 'image' in types:
-            queryset.extend(ImageFile.objects.all())
+            queryset |= ImageFile.objects.all()
         if 'video' in types:
-            queryset.extend(VideoFile.objects.all())
+            queryset |= VideoFile.objects.all()
         if 'audio' in types:
-            queryset.extend(AudioFile.objects.all())
-        if 'generic' in types or not types:
-            queryset.extend(GenericFile.objects.all())
-            queryset.extend(ImageFile.objects.all())
-            queryset.extend(VideoFile.objects.all())
-            queryset.extend(AudioFile.objects.all())
+            queryset |= AudioFile.objects.all()
+
+        if not types:
+            queryset = GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
 
         if search:
-            queryset = [obj for obj in queryset if
-                        (search.lower() in obj.name.lower() or
-                        search.lower() in (obj.description or '').lower() or
-                        any(search.lower() in tag.name.lower() for tag in obj.tags.all()))]
-
-        # Remove duplicates if necessary
-        queryset = list({obj.id: obj for obj in queryset}.values())
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(tags__name__icontains=search)
+            ).distinct()
 
         return queryset
 
     def get_serializer_class(self):
+        if self.action == 'list':
+            return BaseMediaFileSerializer  # Use a generic serializer for listing
         obj = self.get_object()
         if isinstance(obj, ImageFile):
             return ImageFileSerializer
@@ -68,7 +65,6 @@ class FileViewSet(viewsets.ModelViewSet):
             return AudioFileSerializer
         else:
             return GenericFileSerializer
-
 
 
     def create(self, request, *args, **kwargs):
