@@ -24,11 +24,9 @@ class ImageFileSerializer(BaseMediaFileSerializer):
     color_depth = serializers.IntegerField()
     resolution = serializers.CharField(max_length=50)
     exif_data = serializers.JSONField()
-    thumbnail_url = serializers.URLField()
-
     class Meta(BaseMediaFileSerializer.Meta):
         model = ImageFile
-        fields = BaseMediaFileSerializer.Meta.fields + ['width', 'height', 'color_depth', 'resolution', 'exif_data', 'thumbnail_url']
+        fields = BaseMediaFileSerializer.Meta.fields + ['width', 'height', 'color_depth', 'resolution', 'exif_data']
 
 class VideoFileSerializer(BaseMediaFileSerializer):
     duration = serializers.IntegerField()
@@ -37,13 +35,11 @@ class VideoFileSerializer(BaseMediaFileSerializer):
     video_codec = serializers.CharField(max_length=50)
     audio_codec = serializers.CharField(max_length=50)
     bit_rate = serializers.IntegerField()
-    thumbnail_url = serializers.URLField()
-    quality_versions = serializers.JSONField()
     genre = serializers.CharField(max_length=50, required=False)
 
     class Meta(BaseMediaFileSerializer.Meta):
         model = VideoFile
-        fields = BaseMediaFileSerializer.Meta.fields + ['duration', 'resolution', 'frame_rate', 'video_codec', 'audio_codec', 'bit_rate', 'thumbnail_url', 'quality_versions', 'genre']
+        fields = BaseMediaFileSerializer.Meta.fields + ['duration', 'resolution', 'frame_rate', 'video_codec', 'audio_codec', 'bit_rate', 'genre']
 
 class AudioFileSerializer(BaseMediaFileSerializer):
     duration = serializers.IntegerField()
