@@ -26,10 +26,9 @@ class StandardResultsSetPagination(PageNumberPagination):
 class FileViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     pagination_class = StandardResultsSetPagination
-    lookup_field = 'id'
     ordering_fields = '__all__'
     
-    def get_queryset(self):
+    def get_queryset(self, *args, **kwargs):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
 
