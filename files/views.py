@@ -200,8 +200,6 @@ class FileViewSet(viewsets.ModelViewSet):
             file_instance.genre = data['genre']
 
         if 'name' in data:
-            file_instance.name = data['name']
-
             if BaseMediaFile.objects.filter(
                 Q(name=data['name']) & Q(owner=request.user)
             ).exists():
