@@ -123,7 +123,7 @@ class FileViewSet(viewsets.ModelViewSet):
         if BaseMediaFile.objects.filter(
             Q(name=uploaded_file.name) & Q(owner=request.user)
         ).exists():
-            return Response({"error": "Um arquivo com o mesmo nome e tamanho já existe."}, status=status.HTTP_409_CONFLICT)
+            return Response({"error": "Um arquivo com o mesmo nome já existe."}, status=status.HTTP_409_CONFLICT)
 
         file_name = uploaded_file.name
         file_size = uploaded_file.size
@@ -217,13 +217,28 @@ class FileViewSet(viewsets.ModelViewSet):
         if not file_instance.processed:
             return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Construct the file path and delete the file
-        file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
+        # Construct the base file path
+        base_file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
+
+        # Delete the base file
+        delete_file(base_file_path)
+
+        # Delete additional files based on file type
+        if isinstance(file_instance, ImageFile) or isinstance(file_instance, VideoFile):
+            # Delete the thumbnail
+            thumbnail_path = f'{base_file_path}/thumbnail.png'
+            delete_file(thumbnail_path)
+
+        if isinstance(file_instance, VideoFile):
+            # Delete processed video files
+            for resolution in ['480p', '720p', '1080p']:
+                processed_path = f'{base_file_path}/processed/{resolution}'
+                delete_file(processed_path)
+
+        # Delete the file instance from the database
         file_instance.delete()
-        delete_file(file_path)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class WebhookView(APIView):
     # permission_classes = [IsPrivateSubnet]
