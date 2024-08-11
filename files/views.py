@@ -329,6 +329,15 @@ class WebhookView(APIView):
             serializer = AudioFileSerializer(audio_file)
         
         else:
-            return Response({"error": "Unsupported MIME type."}, status=status.HTTP_400_BAD_REQUEST)
+            generic_file = GenericFile(
+                id=file_id,  # Retain the original ID
+                name=file_name,
+                size=file_size,
+                mime_type=mime_type,
+                owner=file_owner,
+                processed=True
+            )
+            generic_file.save()
+            serializer = MixedFileSerializer(generic_file)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
