@@ -202,7 +202,7 @@ class FileViewSet(viewsets.ModelViewSet):
         if 'name' in data:
             if BaseMediaFile.objects.filter(
                 Q(name=data['name']) & Q(owner=request.user)
-            ).exists():
+            ).exists() and data['name'] != file_instance.name:
                 return Response({"error": "A file with the same name already exists."}, status=status.HTTP_409_CONFLICT)
 
             old_file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
