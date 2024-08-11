@@ -15,8 +15,9 @@ from .serializers import (
     AudioFileSerializer
 )
 from .permissions import IsPrivateSubnet
-from aws.s3_objects import upload_file, delete_file
+from aws.s3_objects import upload_file, delete_file, list_files
 from aws.sqs import enqueue_json_object
+from aws.client import bucket_name, aws_manager
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -79,7 +80,8 @@ class FileViewSet(viewsets.ModelViewSet):
                 obj for obj in queryset
                 if search.lower() in obj.name.lower() or
                    search.lower() in (obj.description or '').lower() or
-                   any(search.lower() in tag.name.lower() for tag in obj.tags.all())
+                   any(search.lower() in tag.name.lower() for tag in obj.tags.all()) or
+                   (hasattr(obj, 'genre') and search.lower() in (obj.genre or '').lower())  # Search in genre if it exists
             ]
 
         queryset.sort(key=lambda x: -x.id)
@@ -196,6 +198,32 @@ class FileViewSet(viewsets.ModelViewSet):
         
         if isinstance(file_instance, (VideoFile, AudioFile)) and 'genre' in data:
             file_instance.genre = data['genre']
+
+        if 'name' in data:
+            file_instance.name = data['name']
+
+            old_file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
+            new_file_path = f'users/{request.user.user_id}/files/{data['name']}'
+
+            files = list_files(prefix=old_file_path)
+            
+            for file in files:
+                old_key = file['Key']
+                # Replace the old file path prefix with the new file path prefix
+                new_key = old_key.replace(old_file_path, new_file_path, 1)
+                
+                # Copy the old file to the new location
+                aws_manager.get_s3_client().copy_object(
+                    Bucket=bucket_name,
+                    CopySource={'Bucket': bucket_name, 'Key': old_key},
+                    Key=new_key
+                )
+                
+                # Delete the old file
+                aws_manager.get_s3_client().delete_object(
+                    Bucket=bucket_name,
+                    Key=old_key
+                )
         
         file_instance.save()
 
