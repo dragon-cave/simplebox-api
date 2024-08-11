@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.permissions import IsAuthenticated
 from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
     MixedFileSerializer,
@@ -24,33 +25,54 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class FileViewSet(viewsets.ModelViewSet):
+    parser_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend,)
     pagination_class = StandardResultsSetPagination
-    
+
     def get_queryset(self):
-        # Return all files without filtering.
-        return GenericFile.objects.all()
+        user = self.request.user
+        types = self.request.query_params.get('type', '').split(',')
+        
+        # Filter files by ownership
+        queryset = Q(owner=user)
+        
+        # Filter by types
+        if 'image' in types:
+            queryset |= Q(id__in=ImageFile.objects.filter(owner=user).values_list('id', flat=True))
+        if 'video' in types:
+            queryset |= Q(id__in=VideoFile.objects.filter(owner=user).values_list('id', flat=True))
+        if 'audio' in types:
+            queryset |= Q(id__in=AudioFile.objects.filter(owner=user).values_list('id', flat=True))
+
+        if not types or '' in types:
+            queryset |= Q(id__in=GenericFile.objects.filter(owner=user).values_list('id', flat=True))
+            queryset |= Q(id__in=ImageFile.objects.filter(owner=user).values_list('id', flat=True))
+            queryset |= Q(id__in=VideoFile.objects.filter(owner=user).values_list('id', flat=True))
+            queryset |= Q(id__in=AudioFile.objects.filter(owner=user).values_list('id', flat=True))
+        
+        return GenericFile.objects.filter(queryset)
 
     def list(self, request, *args, **kwargs):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
+        user = self.request.user
 
         queryset = []
 
         # Filter by types
         if 'image' in types:
-            queryset.extend(list(ImageFile.objects.all()))
+            queryset.extend(list(ImageFile.objects.filter(owner=user)))
         if 'video' in types:
-            queryset.extend(list(VideoFile.objects.all()))
+            queryset.extend(list(VideoFile.objects.filter(owner=user)))
         if 'audio' in types:
-            queryset.extend(list(AudioFile.objects.all()))
+            queryset.extend(list(AudioFile.objects.filter(owner=user)))
         
         # If no specific type is requested, include all
         if not types or '' in types:
-            queryset.extend(list(GenericFile.objects.all()))
-            queryset.extend(list(ImageFile.objects.all()))
-            queryset.extend(list(VideoFile.objects.all()))
-            queryset.extend(list(AudioFile.objects.all()))
+            queryset.extend(list(GenericFile.objects.filter(owner=user)))
+            queryset.extend(list(ImageFile.objects.filter(owner=user)))
+            queryset.extend(list(VideoFile.objects.filter(owner=user)))
+            queryset.extend(list(AudioFile.objects.filter(owner=user)))
 
         # Apply search filter
         if search:
@@ -74,22 +96,19 @@ class FileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        # Get the specific file by ID from any of the models
         file_id = kwargs.get('pk')
-        queryset = self.get_queryset()
+        user = self.request.user
 
-        # Search across all file types
-        file_instance = None
-        if GenericFile.objects.filter(id=file_id).exists():
-            file_instance = get_object_or_404(GenericFile, id=file_id)
-        elif ImageFile.objects.filter(id=file_id).exists():
-            file_instance = get_object_or_404(ImageFile, id=file_id)
-        elif VideoFile.objects.filter(id=file_id).exists():
-            file_instance = get_object_or_404(VideoFile, id=file_id)
-        elif AudioFile.objects.filter(id=file_id).exists():
-            file_instance = get_object_or_404(AudioFile, id=file_id)
-        else:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        # Get the specific file by ID from any of the models and check ownership
+        file_instance = get_object_or_404(GenericFile, id=file_id, owner=user)
+        if isinstance(file_instance, GenericFile):
+            # Check specific type and fetch the right instance
+            if file_instance.is_image:
+                file_instance = get_object_or_404(ImageFile, id=file_id, owner=user)
+            elif file_instance.is_video:
+                file_instance = get_object_or_404(VideoFile, id=file_id, owner=user)
+            elif file_instance.is_audio:
+                file_instance = get_object_or_404(AudioFile, id=file_id, owner=user)
 
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
@@ -123,7 +142,7 @@ class FileViewSet(viewsets.ModelViewSet):
 
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     def update(self, request, *args, **kwargs):
         raise MethodNotAllowed("PUT method is not allowed.")
 
@@ -132,7 +151,9 @@ class FileViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
-        file_instance = get_object_or_404(GenericFile, id=file_id)
+        user = self.request.user
+
+        file_instance = get_object_or_404(GenericFile, id=file_id, owner=user)
 
         if not file_instance.processed:
             return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
