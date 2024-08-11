@@ -24,34 +24,45 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class FileViewSet(viewsets.ModelViewSet):
-    filter_backends = (DjangoFilterBackend, )
+    filter_backends = (DjangoFilterBackend,)
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
-        # This returns all files across all types without any filtering or searching.
-        return GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
-    
+        # Return all files without filtering.
+        return GenericFile.objects.all()
+
     def list(self, request, *args, **kwargs):
-        # Start with the full queryset
-        queryset = self.get_queryset()
-
-        # Apply filtering based on the 'type' parameter
         types = self.request.query_params.get('type', '').split(',')
-        if 'image' in types:
-            queryset = queryset.filter(Q(pk__in=ImageFile.objects.all()))
-        if 'video' in types:
-            queryset = queryset.filter(Q(pk__in=VideoFile.objects.all()))
-        if 'audio' in types:
-            queryset = queryset.filter(Q(pk__in=AudioFile.objects.all()))
-
-        # Apply search based on the 'search' parameter
         search = self.request.query_params.get('search', None)
+
+        queryset = []
+
+        # Filter by types
+        if 'image' in types:
+            queryset.extend(list(ImageFile.objects.all()))
+        if 'video' in types:
+            queryset.extend(list(VideoFile.objects.all()))
+        if 'audio' in types:
+            queryset.extend(list(AudioFile.objects.all()))
+        
+        # If no specific type is requested, include all
+        if not types or '' in types:
+            queryset.extend(list(GenericFile.objects.all()))
+            queryset.extend(list(ImageFile.objects.all()))
+            queryset.extend(list(VideoFile.objects.all()))
+            queryset.extend(list(AudioFile.objects.all()))
+
+        # Apply search filter
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search) |
-                Q(tags__name__icontains=search)
-            ).distinct()
+            queryset = [
+                obj for obj in queryset
+                if search.lower() in obj.name.lower() or
+                   search.lower() in (obj.description or '').lower() or
+                   any(search.lower() in tag.name.lower() for tag in obj.tags.all())
+            ]
+
+        # Sort by a common attribute, e.g., name
+        queryset.sort(key=lambda x: x.name)
 
         # Paginate the queryset
         page = self.paginate_queryset(queryset)
@@ -59,14 +70,27 @@ class FileViewSet(viewsets.ModelViewSet):
             serializer = MixedFileSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        # If no pagination, serialize the whole queryset
         serializer = MixedFileSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        # For detail view, retrieve the specific file by ID.
+        # Get the specific file by ID from any of the models
         file_id = kwargs.get('pk')
-        file_instance = get_object_or_404(self.get_queryset(), id=file_id)
+        queryset = self.get_queryset()
+
+        # Search across all file types
+        file_instance = None
+        if GenericFile.objects.filter(id=file_id).exists():
+            file_instance = get_object_or_404(GenericFile, id=file_id)
+        elif ImageFile.objects.filter(id=file_id).exists():
+            file_instance = get_object_or_404(ImageFile, id=file_id)
+        elif VideoFile.objects.filter(id=file_id).exists():
+            file_instance = get_object_or_404(VideoFile, id=file_id)
+        elif AudioFile.objects.filter(id=file_id).exists():
+            file_instance = get_object_or_404(AudioFile, id=file_id)
+        else:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
 
