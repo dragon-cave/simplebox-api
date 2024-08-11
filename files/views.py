@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
 from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
+    BaseMediaFileSerializer,
     GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,
@@ -39,10 +40,10 @@ class FileViewSet(viewsets.ModelViewSet):
             queryset |= VideoFile.objects.all()
         if 'audio' in types:
             queryset |= AudioFile.objects.all()
-        
+
         if not types:
             queryset = GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
-        
+
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) |
@@ -53,14 +54,18 @@ class FileViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        types = self.request.query_params.get('type', '').split(',')
-        if 'image' in types:
+        if self.action == 'list':
+            return BaseMediaFileSerializer  # Use a generic serializer for listing
+        obj = self.get_object()
+        if isinstance(obj, ImageFile):
             return ImageFileSerializer
-        elif 'video' in types:
+        elif isinstance(obj, VideoFile):
             return VideoFileSerializer
-        elif 'audio' in types:
+        elif isinstance(obj, AudioFile):
             return AudioFileSerializer
-        return GenericFileSerializer
+        else:
+            return GenericFileSerializer
+
 
     def create(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
