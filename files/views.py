@@ -121,7 +121,7 @@ class FileViewSet(viewsets.ModelViewSet):
             return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
 
         if BaseMediaFile.objects.filter(
-            Q(name=file_name) & Q(owner=request.user)
+            Q(name=upload_file.name) & Q(owner=request.user)
         ).exists():
             return Response({"error": "Um arquivo com o mesmo nome e tamanho já existe."}, status=status.HTTP_409_CONFLICT)
 
