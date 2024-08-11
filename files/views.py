@@ -52,16 +52,16 @@ class FileViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self):
-        obj = self.get_object()
-        if isinstance(obj, ImageFile):
-            return ImageFileSerializer
-        elif isinstance(obj, VideoFile):
-            return VideoFileSerializer
-        elif isinstance(obj, AudioFile):
-            return AudioFileSerializer
-        else:
-            return GenericFileSerializer
+    # def get_serializer_class(self):
+    #     obj = self.get_object()
+    #     if isinstance(obj, ImageFile):
+    #         return ImageFileSerializer
+    #     elif isinstance(obj, VideoFile):
+    #         return VideoFileSerializer
+    #     elif isinstance(obj, AudioFile):
+    #         return AudioFileSerializer
+    #     else:
+    #         return GenericFileSerializer
 
     def create(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
