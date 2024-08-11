@@ -13,6 +13,17 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'size', 'upload_date', 'mime_type', 'description', 'tags', 'processed']
         read_only_fields = ['size']
 
+class MixedFileSerializer(serializers.Serializer):
+    def to_representation(self, instance):
+        if isinstance(instance, ImageFile):
+            return ImageFileSerializer(instance).data
+        elif isinstance(instance, VideoFile):
+            return VideoFileSerializer(instance).data
+        elif isinstance(instance, AudioFile):
+            return AudioFileSerializer(instance).data
+        else:
+            return GenericFileSerializer(instance).data
+
 class GenericFileSerializer(BaseMediaFileSerializer):
     class Meta(BaseMediaFileSerializer.Meta):
         model = GenericFile

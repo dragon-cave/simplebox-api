@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
 from .models import GenericFile, ImageFile, VideoFile, AudioFile
 from .serializers import (
-    BaseMediaFileSerializer,
+    MixedFileSerializer,
     GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,
@@ -54,17 +54,29 @@ class FileViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        print(self.get_object())
-        return GenericFileSerializer
-    #     obj = self.get_object()
-    #     if isinstance(obj, ImageFile):
-    #         return ImageFileSerializer
-    #     elif isinstance(obj, VideoFile):
-    #         return VideoFileSerializer
-    #     elif isinstance(obj, AudioFile):
-    #         return AudioFileSerializer
-    #     else:
-    #         return GenericFileSerializer
+        if self.action == 'list':
+            return MixedFileSerializer
+
+        obj = self.get_object()
+        if isinstance(obj, ImageFile):
+            return ImageFileSerializer
+        elif isinstance(obj, VideoFile):
+            return VideoFileSerializer
+        elif isinstance(obj, AudioFile):
+            return AudioFileSerializer
+        else:
+            return GenericFileSerializer
+        
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = MixedFileSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = MixedFileSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         uploaded_file = request.FILES.get('file')
