@@ -81,6 +81,8 @@ class FileViewSet(viewsets.ModelViewSet):
                    search.lower() in (obj.description or '').lower() or
                    any(search.lower() in tag.name.lower() for tag in obj.tags.all())
             ]
+            
+        queryset.sort(key=lambda x: x.id)
 
         # Paginate the queryset
         page = self.paginate_queryset(queryset)
