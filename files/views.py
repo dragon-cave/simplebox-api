@@ -96,18 +96,17 @@ class FileViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
-        user = self.request.user
+        file_instance = None
 
-        # Get the specific file by ID from any of the models and check ownership
-        file_instance = get_object_or_404(GenericFile, id=file_id, owner=user)
-        if isinstance(file_instance, GenericFile):
-            # Check specific type and fetch the right instance
-            if file_instance.is_image:
-                file_instance = get_object_or_404(ImageFile, id=file_id, owner=user)
-            elif file_instance.is_video:
-                file_instance = get_object_or_404(VideoFile, id=file_id, owner=user)
-            elif file_instance.is_audio:
-                file_instance = get_object_or_404(AudioFile, id=file_id, owner=user)
+        for model in [ImageFile, VideoFile, AudioFile]:
+            try:
+                file_instance = model.objects.get(id=file_id)
+                break
+            except model.DoesNotExist:
+                continue
+
+        if file_instance is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
@@ -147,53 +146,73 @@ class FileViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
-        file_instance = get_object_or_404(GenericFile, id=file_id)
+        file_instance = None
 
+        for model in [ImageFile, VideoFile, AudioFile]:
+            try:
+                file_instance = model.objects.get(id=file_id)
+                break
+            except model.DoesNotExist:
+                continue
+
+        if file_instance is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the file is processed
         if not file_instance.processed:
-            return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Cannot update. The file is not yet processed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Ensure only allowed fields are updated
-        allowed_fields = ['tags', 'description', 'genre']  # Add 'genre' if applicable
+        # Update fields based on the type of file
         data = request.data
+        valid_fields = ['tags', 'description', 'genre']
 
-        for field in data:
-            if field not in allowed_fields:
-                return Response({"error": f"Field '{field}' is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
+        if not any(field in data for field in valid_fields):
+            return Response({"error": "Invalid update fields."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Update description and genre (if applicable)
+        # Allow only specific fields to be updated
         if 'description' in data:
             file_instance.description = data['description']
         
-        if 'genre' in data and isinstance(file_instance, (AudioFile, VideoFile)):
-            file_instance.genre = data['genre']
-
-        # Handle tags
         if 'tags' in data:
             tags = data['tags']
-            tag_objects = []
-            for tag_name in tags:
-                tag, created = Tag.objects.get_or_create(name=tag_name)
-                tag_objects.append(tag)
-            file_instance.tags.set(tag_objects)
-
+            file_instance.tags.set(Tag.objects.filter(name__in=tags))
+        
+        if isinstance(file_instance, (VideoFile, AudioFile)) and 'genre' in data:
+            file_instance.genre = data['genre']
+        
         file_instance.save()
+
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
+
 
     def destroy(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
         user = self.request.user
+        file_instance = None
 
-        file_instance = get_object_or_404(GenericFile, id=file_id, owner=user)
+        # Try to find the file instance in each model
+        for model in [ImageFile, VideoFile, AudioFile]:
+            try:
+                file_instance = model.objects.get(id=file_id, owner=user)
+                break
+            except model.DoesNotExist:
+                continue
 
+        if file_instance is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the file is processed
         if not file_instance.processed:
             return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Construct the file path and delete the file
         file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
         file_instance.delete()
         delete_file(file_path)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class WebhookView(APIView):
     # permission_classes = [IsPrivateSubnet]
