@@ -148,6 +148,7 @@ class FileViewSet(viewsets.ModelViewSet):
         file_id = kwargs.get('pk')
         file_instance = None
 
+        # Try to find the file instance in any of the models
         for model in [ImageFile, VideoFile, AudioFile]:
             try:
                 file_instance = model.objects.get(id=file_id)
@@ -166,6 +167,7 @@ class FileViewSet(viewsets.ModelViewSet):
         data = request.data
         valid_fields = ['tags', 'description', 'genre']
 
+        # Check if any valid fields are present in the request data
         if not any(field in data for field in valid_fields):
             return Response({"error": "Invalid update fields."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -175,7 +177,12 @@ class FileViewSet(viewsets.ModelViewSet):
         
         if 'tags' in data:
             tags = data['tags']
-            file_instance.tags.set(Tag.objects.filter(name__in=tags))
+            # Process tags and create them if they do not exist
+            tag_objects = []
+            for tag_name in tags:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                tag_objects.append(tag)
+            file_instance.tags.set(tag_objects)
         
         if isinstance(file_instance, (VideoFile, AudioFile)) and 'genre' in data:
             file_instance.genre = data['genre']
@@ -184,7 +191,6 @@ class FileViewSet(viewsets.ModelViewSet):
 
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
-
 
     def destroy(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
