@@ -16,7 +16,7 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
 
 class MixedFileSerializer(serializers.Serializer):
     def to_representation(self, instance):
-        file_path = f'users/{instance.owner.id}/files/{instance.name}'
+        file_path = f'users/{instance.owner.user_id}/files/{instance.name}'
 
         if isinstance(instance, ImageFile):
             data = ImageFileSerializer(instance).data
