@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag
-from aws.s3_objects import get_presigned_url
+from aws.s3_objects import generate_presigned_url
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,14 +20,14 @@ class MixedFileSerializer(serializers.Serializer):
 
         if isinstance(instance, ImageFile):
             data = ImageFileSerializer(instance).data
-            data['thumbnail_url'] = get_presigned_url(f'{file_path}/thumbnail.png')
+            data['thumbnail_url'] = generate_presigned_url(f'{file_path}/thumbnail.png')
         elif isinstance(instance, VideoFile):
             data = VideoFileSerializer(instance).data
-            data['thumbnail_url'] = get_presigned_url(f'{file_path}/thumbnail.png')
+            data['thumbnail_url'] = generate_presigned_url(f'{file_path}/thumbnail.png')
             data['processed_video_urls'] = {
-                '480p': get_presigned_url(f'{file_path}/processed/480p.mp4'),
-                '720p': get_presigned_url(f'{file_path}/processed/720p.mp4'),
-                '1080p': get_presigned_url(f'{file_path}/processed/1080p.mp4'),
+                '480p': generate_presigned_url(f'{file_path}/processed/480p.mp4'),
+                '720p': generate_presigned_url(f'{file_path}/processed/720p.mp4'),
+                '1080p': generate_presigned_url(f'{file_path}/processed/1080p.mp4'),
             }
         elif isinstance(instance, AudioFile):
             data = AudioFileSerializer(instance).data
@@ -38,7 +38,7 @@ class MixedFileSerializer(serializers.Serializer):
         if 'tags' in data:
             data['tags'] = [tag.name for tag in instance.tags.all()]
 
-        data['url'] = get_presigned_url(file_path)
+        data['url'] = generate_presigned_url(file_path)
 
         return data
 
