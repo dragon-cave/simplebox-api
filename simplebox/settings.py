@@ -190,3 +190,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# 10GB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10000000000
