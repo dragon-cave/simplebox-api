@@ -98,7 +98,7 @@ class FileViewSet(viewsets.ModelViewSet):
         file_id = kwargs.get('pk')
         file_instance = None
 
-        for model in [ImageFile, VideoFile, AudioFile]:
+        for model in [GenericFile, ImageFile, VideoFile, AudioFile]:
             try:
                 file_instance = model.objects.get(id=file_id)
                 break
