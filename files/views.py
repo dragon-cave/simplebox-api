@@ -24,7 +24,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class FileViewSet(viewsets.ModelViewSet):
-    parser_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend,)
     pagination_class = StandardResultsSetPagination
 
