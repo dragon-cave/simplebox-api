@@ -24,26 +24,28 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class FileViewSet(viewsets.ModelViewSet):
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filter_backends = (DjangoFilterBackend, )
     pagination_class = StandardResultsSetPagination
-    ordering_fields = '__all__'
     
     def get_queryset(self):
+        # This returns all files across all types without any filtering or searching.
+        return GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
+    
+    def list(self, request, *args, **kwargs):
+        # Start with the full queryset
+        queryset = self.get_queryset()
+
+        # Apply filtering based on the 'type' parameter
         types = self.request.query_params.get('type', '').split(',')
-        search = self.request.query_params.get('search', None)
-
-        queryset = GenericFile.objects.all()
-
         if 'image' in types:
-            queryset |= ImageFile.objects.all()
+            queryset = queryset.filter(Q(pk__in=ImageFile.objects.all()))
         if 'video' in types:
-            queryset |= VideoFile.objects.all()
+            queryset = queryset.filter(Q(pk__in=VideoFile.objects.all()))
         if 'audio' in types:
-            queryset |= AudioFile.objects.all()
-        
-        if not types:
-            queryset = GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
-        
+            queryset = queryset.filter(Q(pk__in=AudioFile.objects.all()))
+
+        # Apply search based on the 'search' parameter
+        search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) |
@@ -51,31 +53,21 @@ class FileViewSet(viewsets.ModelViewSet):
                 Q(tags__name__icontains=search)
             ).distinct()
 
-        return queryset
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return MixedFileSerializer
-
-        obj = self.get_object()
-        if isinstance(obj, ImageFile):
-            return ImageFileSerializer
-        elif isinstance(obj, VideoFile):
-            return VideoFileSerializer
-        elif isinstance(obj, AudioFile):
-            return AudioFileSerializer
-        else:
-            return GenericFileSerializer
-        
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
+        # Paginate the queryset
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = MixedFileSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
+        # If no pagination, serialize the whole queryset
         serializer = MixedFileSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        # For detail view, retrieve the specific file by ID.
+        file_id = kwargs.get('pk')
+        file_instance = get_object_or_404(self.get_queryset(), id=file_id)
+        serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
@@ -105,8 +97,7 @@ class FileViewSet(viewsets.ModelViewSet):
             'file_id': file_instance.id
         })
 
-        serializer = GenericFileSerializer(file_instance)
-
+        serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def update(self, request, *args, **kwargs):
@@ -124,7 +115,6 @@ class FileViewSet(viewsets.ModelViewSet):
 
         file_path = f'users/{request.user.user_id}/files/{file_instance.name}'
         file_instance.delete()
-
         delete_file(file_path)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
