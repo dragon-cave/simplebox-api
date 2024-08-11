@@ -32,30 +32,32 @@ class FileViewSet(viewsets.ModelViewSet):
         types = self.request.query_params.get('type', '').split(',')
         search = self.request.query_params.get('search', None)
 
-        queryset = GenericFile.objects.all()
+        queryset = []
 
         if 'image' in types:
-            queryset |= ImageFile.objects.all()
+            queryset.extend(ImageFile.objects.all())
         if 'video' in types:
-            queryset |= VideoFile.objects.all()
+            queryset.extend(VideoFile.objects.all())
         if 'audio' in types:
-            queryset |= AudioFile.objects.all()
-
-        if not types:
-            queryset = GenericFile.objects.all() | ImageFile.objects.all() | VideoFile.objects.all() | AudioFile.objects.all()
+            queryset.extend(AudioFile.objects.all())
+        if 'generic' in types or not types:
+            queryset.extend(GenericFile.objects.all())
+            queryset.extend(ImageFile.objects.all())
+            queryset.extend(VideoFile.objects.all())
+            queryset.extend(AudioFile.objects.all())
 
         if search:
-            queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(description__icontains=search) |
-                Q(tags__name__icontains=search)
-            ).distinct()
+            queryset = [obj for obj in queryset if
+                        (search.lower() in obj.name.lower() or
+                        search.lower() in (obj.description or '').lower() or
+                        any(search.lower() in tag.name.lower() for tag in obj.tags.all()))]
+
+        # Remove duplicates if necessary
+        queryset = list({obj.id: obj for obj in queryset}.values())
 
         return queryset
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return BaseMediaFileSerializer  # Use a generic serializer for listing
         obj = self.get_object()
         if isinstance(obj, ImageFile):
             return ImageFileSerializer
@@ -65,6 +67,7 @@ class FileViewSet(viewsets.ModelViewSet):
             return AudioFileSerializer
         else:
             return GenericFileSerializer
+
 
 
     def create(self, request, *args, **kwargs):
