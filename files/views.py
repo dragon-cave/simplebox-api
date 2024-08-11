@@ -54,8 +54,6 @@ class FileViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return BaseMediaFileSerializer  # Use a generic serializer for listing
         obj = self.get_object()
         if isinstance(obj, ImageFile):
             return ImageFileSerializer
