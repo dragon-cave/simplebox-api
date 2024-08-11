@@ -14,7 +14,6 @@ from .serializers import (
     AudioFileSerializer
 )
 from .permissions import IsPrivateSubnet
-from aws.client import aws_manager
 from aws.s3_objects import upload_file, delete_file
 from aws.sqs import enqueue_json_object
 

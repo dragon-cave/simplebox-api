@@ -12,7 +12,7 @@ def enqueue_json_object(dictionary):
     message_body = json.dumps(dictionary)
 
     try:
-        response = aws_manager.send_sqs_message(
+        response = aws_manager.get_sqs_client().send_sqs_message(
             queue_url=queue_url,
             message_body=message_body,
             message_attributes={
