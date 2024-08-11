@@ -15,14 +15,22 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
 
 class MixedFileSerializer(serializers.Serializer):
     def to_representation(self, instance):
+        # Determine which serializer to use
         if isinstance(instance, ImageFile):
-            return ImageFileSerializer(instance).data
+            data = ImageFileSerializer(instance).data
         elif isinstance(instance, VideoFile):
-            return VideoFileSerializer(instance).data
+            data = VideoFileSerializer(instance).data
         elif isinstance(instance, AudioFile):
-            return AudioFileSerializer(instance).data
+            data = AudioFileSerializer(instance).data
         else:
-            return GenericFileSerializer(instance).data
+            data = GenericFileSerializer(instance).data
+        
+        # Format tags as a list of strings
+        if 'tags' in data:
+            data['tags'] = [tag.name for tag in instance.tags.all()]
+
+        return data
+
 
 class GenericFileSerializer(BaseMediaFileSerializer):
     class Meta(BaseMediaFileSerializer.Meta):
