@@ -108,6 +108,9 @@ class FileViewSet(viewsets.ModelViewSet):
         if file_instance is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if file_instance.owner.user_id != request.user.user_id:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = MixedFileSerializer(file_instance)
         return Response(serializer.data)
 
@@ -163,6 +166,9 @@ class FileViewSet(viewsets.ModelViewSet):
 
         if file_instance is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if file_instance.owner.user_id != request.user.user_id:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if the file is processed
         if not file_instance.processed:
@@ -211,6 +217,9 @@ class FileViewSet(viewsets.ModelViewSet):
                 continue
 
         if file_instance is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if file_instance.owner.user_id != request.user.user_id:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if the file is processed
