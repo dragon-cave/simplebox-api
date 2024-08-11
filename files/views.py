@@ -82,9 +82,6 @@ class FileViewSet(viewsets.ModelViewSet):
                    any(search.lower() in tag.name.lower() for tag in obj.tags.all())
             ]
 
-        # Sort by a common attribute, e.g., name
-        queryset.sort(key=lambda x: x.name)
-
         # Paginate the queryset
         page = self.paginate_queryset(queryset)
         if page is not None:
