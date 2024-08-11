@@ -154,7 +154,7 @@ class FileViewSet(viewsets.ModelViewSet):
         file_instance = None
 
         # Try to find the file instance in any of the models
-        for model in [ImageFile, VideoFile, AudioFile]:
+        for model in [GenericFile, ImageFile, VideoFile, AudioFile]:
             try:
                 file_instance = model.objects.get(id=file_id)
                 break
@@ -203,7 +203,7 @@ class FileViewSet(viewsets.ModelViewSet):
         file_instance = None
 
         # Try to find the file instance in each model
-        for model in [ImageFile, VideoFile, AudioFile]:
+        for model in [GenericFile, ImageFile, VideoFile, AudioFile]:
             try:
                 file_instance = model.objects.get(id=file_id, owner=user)
                 break
