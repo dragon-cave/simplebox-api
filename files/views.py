@@ -1,16 +1,15 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
-from .models import GenericFile, ImageFile, VideoFile, AudioFile
+from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag
 from .serializers import (
     MixedFileSerializer,
-    GenericFileSerializer,
     ImageFileSerializer,
     VideoFileSerializer,
     AudioFileSerializer
@@ -147,7 +146,39 @@ class FileViewSet(viewsets.ModelViewSet):
         raise MethodNotAllowed("PUT method is not allowed.")
 
     def partial_update(self, request, *args, **kwargs):
-        raise MethodNotAllowed("PATCH method is not allowed.")
+        file_id = kwargs.get('pk')
+        file_instance = get_object_or_404(GenericFile, id=file_id)
+
+        if not file_instance.processed:
+            return Response({"error": "O arquivo ainda está sendo processado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure only allowed fields are updated
+        allowed_fields = ['tags', 'description', 'genre']  # Add 'genre' if applicable
+        data = request.data
+
+        for field in data:
+            if field not in allowed_fields:
+                return Response({"error": f"Field '{field}' is not allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update description and genre (if applicable)
+        if 'description' in data:
+            file_instance.description = data['description']
+        
+        if 'genre' in data and isinstance(file_instance, (AudioFile, VideoFile)):
+            file_instance.genre = data['genre']
+
+        # Handle tags
+        if 'tags' in data:
+            tags = data['tags']
+            tag_objects = []
+            for tag_name in tags:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                tag_objects.append(tag)
+            file_instance.tags.set(tag_objects)
+
+        file_instance.save()
+        serializer = MixedFileSerializer(file_instance)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         file_id = kwargs.get('pk')
