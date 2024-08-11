@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag
+from aws.s3_objects import get_presigned_url
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,11 +16,19 @@ class BaseMediaFileSerializer(serializers.ModelSerializer):
 
 class MixedFileSerializer(serializers.Serializer):
     def to_representation(self, instance):
-        # Determine which serializer to use
+        file_path = f'users/{instance.owner.id}/files/{instance.name}'
+
         if isinstance(instance, ImageFile):
             data = ImageFileSerializer(instance).data
+            data['thumbnail_url'] = get_presigned_url(f'{file_path}/thumbnail.png')
         elif isinstance(instance, VideoFile):
             data = VideoFileSerializer(instance).data
+            data['thumbnail_url'] = get_presigned_url(f'{file_path}/thumbnail.png')
+            data['processed_video_urls'] = {
+                '480p': get_presigned_url(f'{file_path}/processed/480p.mp4'),
+                '720p': get_presigned_url(f'{file_path}/processed/720p.mp4'),
+                '1080p': get_presigned_url(f'{file_path}/processed/1080p.mp4'),
+            }
         elif isinstance(instance, AudioFile):
             data = AudioFileSerializer(instance).data
         else:
@@ -29,8 +38,9 @@ class MixedFileSerializer(serializers.Serializer):
         if 'tags' in data:
             data['tags'] = [tag.name for tag in instance.tags.all()]
 
-        return data
+        data['url'] = get_presigned_url(file_path)
 
+        return data
 
 class GenericFileSerializer(BaseMediaFileSerializer):
     class Meta(BaseMediaFileSerializer.Meta):

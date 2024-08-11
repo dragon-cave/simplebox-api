@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
-from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag
+from .models import GenericFile, ImageFile, VideoFile, AudioFile, Tag, BaseMediaFile
 from .serializers import (
     MixedFileSerializer,
     ImageFileSerializer,
@@ -119,6 +119,11 @@ class FileViewSet(viewsets.ModelViewSet):
         
         if '/' in uploaded_file.name:
             return Response({"error": "O nome do arquivo não pode conter barras."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if BaseMediaFile.objects.filter(
+            Q(name=file_name) & Q(owner=request.user)
+        ).exists():
+            return Response({"error": "Um arquivo com o mesmo nome e tamanho já existe."}, status=status.HTTP_409_CONFLICT)
 
         file_name = uploaded_file.name
         file_size = uploaded_file.size
